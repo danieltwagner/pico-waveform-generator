@@ -1,6 +1,10 @@
 from display.lcd_driver import I2cLcd
 from machine import I2C, Pin
 
+class DisplayType(Enum):
+    NONE = 0
+    LCD = 1
+    OLED = 2
 
 class Display:
     def __init__(

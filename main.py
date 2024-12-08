@@ -1,15 +1,17 @@
+import gc
+import utime
+from machine import freq
+
 from control.button import switch_power_supply_to_pwm
+from control.control import Control, ControlType
+from display.display import DisplayType
 from generation.constants import SYSTEM_FREQUENCY
 from generation.generation import WaveformGenerator
 from utils.helpers import menu_state_tracker
-import utime
-import gc
-from machine import freq
-from control.control import Control
 
 
 def main():
-    control = Control(display_on=True, buttons_on=True)
+    control = Control(DisplayType.OLED, ControlType.BUTTONS)
     control.update_display()
     wave = control.menu.current_waveform
 
