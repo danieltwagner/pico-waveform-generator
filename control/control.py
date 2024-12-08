@@ -3,10 +3,9 @@ from generation.constants import WaveformEntries
 from generation.waveforms import WAVEFORMS, WaveformParams
 from utils.helpers import get_params_values_string
 
-from display.display import Display, DisplayType
 from control.button import ButtonControl
 
-class ControlType(Enum):
+class ControlType:
     NONE = 0
     BUTTONS = 1
     ROTARY = 2
@@ -55,22 +54,9 @@ class Menu:
 
 
 class Control:
-    def __init__(self, display_type=DisplayType.NONE, control_type=ControlType.NONE):
+    def __init__(self, display=None, control_type=ControlType.NONE):
 
-        if display_type == DisplayType.LCD:
-            self.display = Display(
-                i2c_bus=1,
-                sda_pin=26,
-                scl_pin=27,
-                i2c_frequency=400000,
-                i2c_address=0x3F,
-                line_count=2,
-                column_count=16,
-            )
-        elif display_type == DisplayType.OLED:
-            pass
-        else:
-            self.display = None
+        self.display = display
 
         if control_type == ControlType.BUTTONS:
             self.main_button = ButtonControl(pin=19)

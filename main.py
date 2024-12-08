@@ -4,17 +4,29 @@ from machine import freq
 
 from control.button import switch_power_supply_to_pwm
 from control.control import Control, ControlType
-from display.display import DisplayType
+from display.display import DisplayLCD, DisplayOLED
 from generation.constants import SYSTEM_FREQUENCY
 from generation.generation import WaveformGenerator
 from utils.helpers import menu_state_tracker
 
 
 def main():
-    control = Control(DisplayType.OLED, ControlType.BUTTONS)
+    print("Setting up display and control")
+    # lcd_display = DisplayLCD(
+    #     i2c_bus=1,
+    #     sda_pin=26,
+    #     scl_pin=27,
+    #     i2c_frequency=400000,
+    #     i2c_address=0x3F,
+    #     line_count=2,
+    #     column_count=16,
+    # )
+    oled_display = DisplayOLED(128, 32, i2c_bus=1, sda_pin=26, scl_pin=27)
+    control = Control(oled_display, ControlType.BUTTONS)
     control.update_display()
-    wave = control.menu.current_waveform
 
+    print("Starting waveform generator")
+    wave = control.menu.current_waveform
     generator = WaveformGenerator()
     generator.start(wave)
 
@@ -37,6 +49,7 @@ def main():
 
 
 if __name__ == "__main__":
+    print("Setting up system")
     freq(SYSTEM_FREQUENCY)
     switch_power_supply_to_pwm()
     gc.collect()
