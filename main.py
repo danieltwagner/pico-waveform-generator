@@ -21,8 +21,15 @@ def main():
     #     line_count=2,
     #     column_count=16,
     # )
-    oled_display = DisplayOLED(128, 32, i2c_bus=1, sda_pin=26, scl_pin=27)
-    control = Control(oled_display, ControlType.BUTTONS)
+    oled_display = DisplayOLED(
+        width=128, 
+        height=32, 
+        rotate_180=False, 
+        i2c_bus=1, 
+        sda_pin=26, 
+        scl_pin=27
+    )
+    control = Control(oled_display, ControlType.ROTARY)
     control.update_display()
 
     print("Starting waveform generator")
@@ -34,7 +41,7 @@ def main():
 
     while True:
         try:
-            control.check_buttons()
+            control.check_input()
             if control.menu.current_page_index == 0 and has_menu_changed():
                 new_wave = control.menu.current_waveform
                 generator.stop()
