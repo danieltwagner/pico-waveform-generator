@@ -65,12 +65,12 @@ class Control:
             self.increase_button = ButtonControl(pin=18)
             self.decrease_button = ButtonControl(pin=20)
         elif control_type == ControlType.ROTARY:
-            self.main_button = ButtonControl(pin=13)
+            self.main_button = ButtonControl(pin=11)
             self.rotary = RotaryIRQ(pin_num_clk=14,
-                pin_num_dt=15,
+                pin_num_dt=10,
                 min_val=0, 
                 max_val=5, 
-                reverse=False, 
+                reverse=True, 
                 range_mode=RotaryIRQ.RANGE_UNBOUNDED,
                 pull_up=True,
             )

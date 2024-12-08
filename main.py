@@ -24,10 +24,10 @@ def main():
     oled_display = DisplayOLED(
         width=128, 
         height=32, 
-        rotate_180=False, 
-        i2c_bus=1, 
-        sda_pin=26, 
-        scl_pin=27
+        rotate_180=True, 
+        i2c_bus=0,
+        sda_pin=8,
+        scl_pin=9,
     )
     control = Control(oled_display, ControlType.ROTARY)
     control.update_display()
