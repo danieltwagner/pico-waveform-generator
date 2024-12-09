@@ -1,4 +1,4 @@
-SYSTEM_FREQUENCY = 200_000_000
+SYSTEM_FREQUENCY = 125_000_000
 
 
 class WaveformEntries:
