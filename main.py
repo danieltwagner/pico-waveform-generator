@@ -39,7 +39,7 @@ def main():
 
     while True:
         try:
-            control.check_buttons()
+            control.check_input()
             if control.menu.current_page_index == 0 and has_menu_changed():
                 new_wave = control.menu.current_waveform
                 generator.stop()

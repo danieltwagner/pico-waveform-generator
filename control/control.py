@@ -4,10 +4,12 @@ from generation.waveforms import WAVEFORMS, WaveformParams
 from utils.helpers import get_params_values_string
 
 from control.button import ButtonControl
+from control.rotary_irq_rp2 import RotaryIRQ
 
 class ControlType:
     NONE = 0
     BUTTONS = 1
+    ROTARY = 2
 
 class Page:
     def __init__(self, name, setting):
@@ -56,15 +58,23 @@ class Control:
     def __init__(self, display=None, control_type=ControlType.NONE):
 
         self.display = display
+        self.control_type = control_type
 
         if control_type == ControlType.BUTTONS:
             self.main_button = ButtonControl(pin=19)
             self.increase_button = ButtonControl(pin=18)
             self.decrease_button = ButtonControl(pin=20)
-        else:
-            self.main_button = None
-            self.increase_button = None
-            self.decrease_button = None
+        elif control_type == ControlType.ROTARY:
+            self.main_button = ButtonControl(pin=11)
+            self.rotary = RotaryIRQ(pin_num_clk=14,
+                pin_num_dt=10,
+                min_val=0,
+                max_val=5,
+                reverse=True,
+                range_mode=RotaryIRQ.RANGE_UNBOUNDED,
+                pull_up=True,
+            )
+            self.rotary_last_value = self.rotary.value()
 
         self.main_page = Page("Main", setting=None)
         self.waveform_page = Page(
@@ -95,48 +105,74 @@ class Control:
         self.display.render(lines)
         return
 
+    def check_input(self):
+        if self.control_type == ControlType.BUTTONS:
+            result = self.check_buttons()
+        else:
+            main_pressed, _ = self.main_button.check_pressed()
+            delta = self.check_rotary()
+
+            # TODO: I really don't love this :(
+            fake_duration = abs(delta)
+            if abs(delta) > 2:
+                fake_duration = 1000
+            if abs(delta) > 4:
+                fake_duration = 2000
+            result = (main_pressed, delta > 0, fake_duration, delta < 0, fake_duration)
+
+        self.handle_input(*result)
+
     def check_buttons(self):
-        if self.main_button:
-            default_value = (False, 0)
-            main_pressed, _ = (
-                self.main_button.check_pressed() if self.main_button else default_value
+        default_value = (False, 0)
+        main_pressed, _ = (
+            self.main_button.check_pressed() if self.main_button else default_value
+        )
+        increase_pressed, increase_duration = (
+            self.increase_button.check_pressed()
+            if self.increase_button
+            else default_value
+        )
+        decrease_pressed, decrease_duration = (
+            self.decrease_button.check_pressed()
+            if self.decrease_button
+            else default_value
+        )
+
+        return main_pressed, increase_pressed, increase_duration, decrease_pressed, decrease_duration
+
+    def check_rotary(self):
+        last_val = self.rotary_last_value
+        new_val = self.rotary.value()
+        self.rotary_last_value = new_val
+        return new_val - last_val
+
+    def handle_input(self, main_pressed, increase_pressed, increase_duration, decrease_pressed, decrease_duration):
+
+        if not (main_pressed or increase_pressed or decrease_pressed):
+            return
+
+        if increase_pressed and decrease_pressed:
+            self.display.toggle_backlight() if self.display else None
+            return
+
+        if main_pressed:
+            self.menu.go_to_next_page()
+            self.update_display()
+            return
+
+        if increase_pressed and self.menu.current_page.setting:
+            self.menu.current_page.setting.increase(
+                press_duration=increase_duration
             )
-            increase_pressed, increase_duration = (
-                self.increase_button.check_pressed()
-                if self.increase_button
-                else default_value
+            self.update_display()
+            return
+
+        if decrease_pressed and self.menu.current_page.setting:
+            self.menu.current_page.setting.decrease(
+                press_duration=decrease_duration
             )
-            decrease_pressed, decrease_duration = (
-                self.decrease_button.check_pressed()
-                if self.decrease_button
-                else default_value
-            )
-
-            if not (main_pressed or increase_pressed or decrease_pressed):
-                return
-
-            if increase_pressed and decrease_pressed:
-                self.display.toggle_backlight() if self.display else None
-                return
-
-            if main_pressed:
-                self.menu.go_to_next_page()
-                self.update_display()
-                return
-
-            if increase_pressed and self.menu.current_page.setting:
-                self.menu.current_page.setting.increase(
-                    press_duration=increase_duration
-                )
-                self.update_display()
-                return
-
-            if decrease_pressed and self.menu.current_page.setting:
-                self.menu.current_page.setting.decrease(
-                    press_duration=decrease_duration
-                )
-                self.update_display()
-                return
+            self.update_display()
+            return
 
     def setup_menu(self):
         default_pages = [self.main_page, self.waveform_page]
